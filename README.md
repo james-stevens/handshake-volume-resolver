@@ -2,7 +2,7 @@
 
 This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver and authritative ROOT server, with resolver/authritative queries separated based on the `RD` bit flag.
 
-You are required to run one or more (Handshake Nodes)[https://github.com/james-stevens/handshake-full-node]
+You are required to run one or more [Handshake Nodes](https://github.com/james-stevens/handshake-full-node)
 to provide the Handshake resolution.
 
 If you require DoH, you will need to run this externally, `dnsdist` is a good choice for this.
