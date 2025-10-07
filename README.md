@@ -1,25 +1,45 @@
 # A Universal DNS Resolver of ICANN & Web3 Names
 
-Higher throughput resolving ICANN, Handshake and `.eth` domain names using `bind` pointed to one or more external [Handshake node, `hsd`](https://github.com/handshake-org/hsd)
+This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver and authritative ROOT server, with resolver/authritative queries separated based on the `RD` bit flag.
 
-This is a container that runs a DNS resolver using ISC's `bind` to get higher through-put,
-but referring ROOT queries to instance(s) of `hsd`, so it can resolve Handshake names.
+You are required to run one or more [Handshake Nodes](https://github.com/james-stevens/handshake-full-node)
+to provide the Handshake resolution.
 
-When you run this container, pass the environment variable `HSD_MASTERS` to a semi-coloon separated list of the IP Addresses your `hsd` instances.
-If `HSD_MASTERS` is not set the Handshake feature is disabled, and only ICANN & `.eth` are supported (see below for `eth` support).
+If you require DoH, you will need to run this externally, `dnsdist` is a good choice for this.
 
-The `hsd` IP Addresses must be the ones that will respond with authritative answers (`--ns-host`).
+This container runs a "prefer ICANN" model. This means, if the same TLD exists in ICANN and Handshake, the ICANN TLD will be used.
 
-If you wish to `syslog` to an external syslog server (listening in UDP/514) pass the environment variable `SYSLOG_SERVER` 
-with the IP Address of your syslog server, otherwise it will syslog to `stdout`.
 
-Set the environment variable `WITH_BIND_V6` to `Y` to get IPv6 support, otherwise `bind` will run in IPv4 mode only.
+Prometheus stats can be found on ports 9119 (`bind` resolver) & 8083 (`dnsdist` filter).
+
+To enable `dnsdist` stats you must set two Environment Vairables (see below)
+
+
+# Environment Vairables
+
+| names              | meaning/use |
+|--------------------|-------------|
+| `ALCHEMY_API_CODE` | API code from [Alchemy](https://www.alchemy.com/) |
+| `DNSDIST_STATS_KEY` | Password to access `dnsdist` Promatheus Metric |
+| `DNSDIST_STATS_ACL` | ACL for who can access `dnsdist` Promatheus Metric |
+| `UWR_IP_ADDRESSES`  | IP Address of a [Universal Web Redirector](https://github.com/james-stevens/universal-web-redirect), require for ETH support
+| `HSD_MASTERS`       | Semi-colon separated list of you HSD nodes |
+
+
+# Additional Zone
+
+This container can also serve additonal authritative zones. Copy the zones files into a directory, so the file name is the
+same as the zone name, then map that directory into the container as `/opt/data/auth_zones`.
+
+Uodates to any of these zones files will be scanned for every 5 mins and the new data checked & loaded.
 
 
 # ETH Support
 
 ENS domains (domains ending `.eth`) are supported by using an Alchemy RPC account, which must be passed into the container as the
 environment variable `ALCHEMY_API_CODE`.
+
+If you do not provide an `ALCHEMY_API_CODE` then the dot-ETH funcationality will be removed.
 
 When you request a DNS record, the first thing it will do is try & find the record you asked for. If this fails, and you asked for 
 an IPv4 address, you will be given the IP of a [Universal Web Redirector](https://github.com/james-stevens/universal-web-redirect).
@@ -39,46 +59,6 @@ For this service to work correctly, you must set the environmant variables
 `ALCHEMY_API_CODE` - An Alchemy RPC account API code
 
 `UWR_IP_ADDRESSES` - A comma separated list of IPv4 addresses of Universal Web Redirector servers
-
-
-# DoH Support
-
-From v9.17.10 onwards ISC's `bind` now has native DoH support, which is enabled & available in this container.
-
-However, `bind` DoH has been deliberately set to run in HTTP mode only, so you will need to run an external TLS off-loader/shedder
-to get the TLS support. A good choice is `haproxy`. This can also be used to provide load-balalncing & failover
-between multiple instances of this container.
-
-Here's a very simple `haproxy` configuration, which should be all you need to get TLS & load-balancing/failover support.
-
-	frontend doh-plain-http1-1
-		mode http
-		timeout client 10s
-		bind <EXTERNAL-IP>:443 v4v6 tfo ssl crt /opt/pems/<YOUR-PEM>.pem alpn h2,http/1.1
-		default_backend doh-server-plain-http2
-
-	backend doh-server-plain-http2
-		mode http
-		timeout connect 10s
-		timeout server 10s
-		server container-1 <THIS-CONTAINER-1>:80 proto h2
-		server container-2 <THIS-CONTAINER-2>:80 proto h2
-
-where
-
-`<EXTERNAL-IP>` is the external (e.g. internet) IP Address you want to access your DoH service from
-
-`<YOUR-PEM>` is the name of your TLS PEM file, i.e. a PEM of both your private key & CA Certificiate
-
-`<THIS-CONTAINER-1>` is the IP Address of instance-1 of this container
-
-`<THIS-CONTAINER-2>` is the IP Address of instance-2 of this container
-
-NOTE: The path of the DoH service can either be `/` or `/doh`, so you'd put `https://some.host.name/` or `https://some.host.name/doh` into your browser.
-Where `some.host.name` resolves to `EXTERNAL-IP` and `YOUR-PEM` is valid for that hostname.
-
-Using the path `/doh` can be useful if you want your DoH service to co-exist on the same host name as other web services,
-as you can then redirect to the DoH service based on the path.
 
 
 # docker.com

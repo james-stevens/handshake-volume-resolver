@@ -2,10 +2,12 @@
 # (c) Copyright 2020-2025 JRCS Ltd - All Right Reserved
 #
 CC=gcc
-CFLAGS=-O2 -Wall -Wextra -Wshadow -pedantic -Wno-variadic-macros -Wnull-dereference -Wformat=2 -Wno-format-y2k
+ALL_FLAGS=-Wall -Wextra -Wshadow -pedantic -Wno-variadic-macros -Wnull-dereference -Wformat=2 -Wno-format-y2k
+CFLAGS=-O2 $(ALL_FLAGS)
+# CFLAGS=-ggdb $(ALL_FLAGS)
 LDFLAGS=
 #
-OBJS=log_message.o udp_sock.o root_proxy.o liball.o
+OBJS=log_message.o udp_sock.o root_proxy.o liball.o stats.o
 TARGET=root_proxy
 
 ALL: depends depends.include $(TARGET)

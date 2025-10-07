@@ -3,7 +3,7 @@
 id="$1"; if test -z "${id}"; then id=1; fi
 exec /usr/local/bin/root_proxy \
 	-l x400003 \
-	-S 60 \
+	-i 60 \
 	-s 127.2.0.${id} \
-	-h "${HSD_MASTERS}" \
-	-i 127.0.0.1
+	-S "${HSD_MASTERS}" \
+	-F 127.0.0.1:5300

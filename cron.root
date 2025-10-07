@@ -1,0 +1,1 @@
+*/5 * * * * /usr/local/bin/cron_check_for_updates

@@ -1,0 +1,48 @@
+#! /bin/sh
+##########################################################################
+#    (c) Copyright 2021-2025 JRCS Ltd - All Rights Reserved              #
+##########################################################################
+
+base="/run/named"
+
+mkdir -p ${base} ${base}/etc
+mkdir -p ${base}/etc/bind ${base}/zones ${base}/var ${base}/var/run
+cp -a /etc/bind/rndc.key ${base}/etc/bind
+
+cp /dev/null ${base}/etc/bind/auth_zones.inc
+chmod 644 ${base}/etc/bind/auth_zones.inc
+if test -d /opt/data/auth_zones/.
+	then
+		cd /opt/data/auth_zones
+		for file in *
+		do
+			logger -t start_bind "Adding auth zone '${file}'"
+			named-checkzone -i local-sibling ${file} ${file} | logger -t start_bind
+			cp ${file} ${base}/zones/${file}
+			chmod 644 ${base}/zones/${file}
+			echo "zone \"${file}\" { type primary; file \"/zones/${file}\"; notify no; };" >> ${base}/etc/bind/auth_zones.inc
+		done
+	fi
+
+if test "${ALCHEMY_API_CODE}"
+	then
+		cp /usr/local/etc/with_eth.inc ${base}/etc/bind/with_eth.inc
+	else
+		touch ${base}/etc/bind/with_eth.inc
+	fi
+
+cp /usr/local/etc/named.conf ${base}/etc/bind/named.conf
+chown -R named: ${base}
+chmod 755 ${base}/zones
+
+extra="-4"
+if test "${WITH_BIND_V6}" = "Y"; then extra=""; fi
+
+if ! named-checkconf -t ${base}
+	then
+		echo "======= ERROR: named-checkconf failed ========"
+		sleep 5
+		exit 1
+	fi
+
+exec /usr/sbin/named -f ${extra} -u named -t ${base}

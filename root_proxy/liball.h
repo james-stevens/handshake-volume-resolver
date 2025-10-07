@@ -37,5 +37,6 @@ extern int set_blocking(int fd,int blocking);
 extern void mksin6(struct sockaddr_in6 *sin,struct in6_addr *addr, unsigned short port);
 extern int decode_net_addr(struct net_addr_st *ni,char * addr_in);
 extern uint64_t xtoi(char * hex);
+extern int change_to_user(char * run_as);
 
 #endif // _INCLUDE_LIBALL_H

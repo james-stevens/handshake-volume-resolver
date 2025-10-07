@@ -5,7 +5,12 @@
 
 if test "${SYSLOG_SERVER}"
 	then
-		exec /sbin/syslogd -n -b 9 -s 100000 -R ${SYSLOG_SERVER} -L
-	else
-		exec /sbin/syslogd -n -O -
+		exec /sbin/syslogd -n -R ${SYSLOG_SERVER}
 	fi
+
+if test -d /opt/data/logs/.
+	then
+		exec /sbin/syslogd -n -O /opt/data/logs/messages -b 9 -s 100000
+	fi
+
+exec /sbin/syslogd -n -O -

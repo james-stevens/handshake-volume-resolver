@@ -1,0 +1,22 @@
+#! /bin/sh
+##########################################################################
+#    (c) Copyright 2021-2025 JRCS Ltd - All Rights Reserved              #
+##########################################################################
+
+if ! test -d /opt/data/auth_zones/.; then exit 0; fi
+base="/run/named"
+
+cd /opt/data/auth_zones
+for file in *
+do
+	if test ${file} -nt ${base}/zones/${file}
+		then
+			if named-checkzone -i local-sibling ${file} ${file} | logger -t cron_check_for_updates
+				then
+					logger -t cron_check_for_updates "Updating auth zone '${file}'"
+					cp ${file} ${base}/zones/${file}
+					chmod 644 ${base}/zones/${file}
+					rndc reload ${file}
+				fi
+		fi
+done

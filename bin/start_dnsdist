@@ -1,0 +1,27 @@
+#! /bin/sh
+
+my_name="$(hostname)"
+my_ip="$(awk '{ for(i=2;i<=NF;i++) if ($i=="'"${my_name}"'") print $1 }' /etc/hosts)"
+
+{
+echo "addLocal(\"${my_ip}:53\")"
+echo 'addLocal("127.0.0.1:53")'
+echo ''
+if test "${DNSDIST_STATS_KEY}" -a "${DNSDIST_STATS_ACL}"
+	then
+		echo 'webserver("0.0.0.0:8083")'
+		echo "setWebserverConfig({password=hashPassword(\"${DNSDIST_STATS_KEY}\"), apiKey=hashPassword(\"${DNSDIST_STATS_KEY}\"), acl=\"${DNSDIST_STATS_ACL}\"})"
+	fi
+echo ''
+echo 'addAction(RDRule(), PoolAction("recursive-pool"))'
+echo 'addAction(NotRule(RDRule()), PoolAction("auth-pool"))'
+echo ''
+echo 'newServer({address="127.0.0.1:5300", pool="recursive-pool"})'
+echo ''
+echo 'newServer({address="127.2.0.1", pool="auth-pool"})'
+echo 'newServer({address="127.2.0.2", pool="auth-pool"})'
+} > /run/dnsdist.conf
+
+/usr/bin/dnsdist --config /run/dnsdist.conf --check-config | logger -t start_dnsdist
+
+exec /usr/bin/dnsdist --config /run/dnsdist.conf --supervised
