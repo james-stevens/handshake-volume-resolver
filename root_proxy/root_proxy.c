@@ -48,6 +48,7 @@ struct net_addr_st client_ni;
 struct net_addr_st second_ni[MAX_HANDSHAKE];
 int num_second = 0;
 time_t stats_interval = 10;
+int force_norec = 0;
 
 char prom_file[PATH_MAX] = { 0 };
 
@@ -175,6 +176,7 @@ unsigned char *p;
 		return -1;
 		}
 	stats_add(&stats->client.qry,this_proxy->query_len);
+	if (force_norec) this_proxy->query[2] = this_proxy->query[2] & 0xfe; // clear RD bit
 
 	p = this_proxy->query;
 	GETSHORT(this_proxy->old_id,p);
@@ -278,6 +280,7 @@ void usage()
 	puts("    -p <path>  - File to write promtheus stats to, default = no stats written");
 	puts("    -i <sec>   - Interval in secs for writing stats, default=10s");
 	puts("    -l <level> - Logging level & outptu stream, see `log_message.h`");
+	puts("    -n         - Force +norec (rd=0)");
 	puts("");
 	exit(1);
 }
@@ -308,10 +311,11 @@ loglvl_t level = MSG_NORMAL|MSG_DEBUG|MSG_STDOUT|MSG_FILE_LINE;
 	AZERO(each_proxy);
 
 	int opt;
-	while ((opt=getopt(argc,argv,"i:c:s:F:S:p:l:t:")) > 0)
+	while ((opt=getopt(argc,argv,"i:c:s:F:S:p:l:t:n")) > 0)
 		{
 		switch(opt)
 			{
+			case 'n': force_norec = 1; break;
 			case 't': running_threads = atoi(optarg); break;
 			case 'i': stats_interval = atoi(optarg); break;
 			case 'c': decode_net_addr(&client_ni,optarg); break;

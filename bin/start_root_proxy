@@ -4,6 +4,6 @@ id="$1"; if test -z "${id}"; then id=1; fi
 exec /usr/local/bin/root_proxy \
 	-l x400003 \
 	-i 60 \
-	-F 127.2.0.${id} \
+	-s 127.2.0.${id} \
 	-S "${HSD_MASTERS}" \
-	-s 127.0.0.1
+	-F 127.0.0.1:5300
