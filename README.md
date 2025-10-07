@@ -1,6 +1,6 @@
 # A Universal DNS Resolver of ICANN & Web3 Names
 
-This contsiner runs a high volume Handshake & ETH aware DNS Resolver and authritative ROOT server, with queries separated based on the `RD` bit flag.
+This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver and authritative ROOT server, with resolver/authritative queries separated based on the `RD` bit flag.
 
 You are required to run one or more (Handshake Nodes)[https://github.com/james-stevens/handshake-full-node]
 to provide the Handshake resolution.
@@ -10,21 +10,25 @@ If you require DoH, you will need to run this externally, `dnsdist` is a good ch
 This container runs a "prefer ICANN" model. This means, if the same TLD exists in ICANN and Handshake, the ICANN TLD will be used.
 
 
-Prometheus stats can be found on ports 9119 & 8083.
+Prometheus stats can be found on ports 9119 (`bind` resolver) & 8083 (`dnsdist` filter).
 
-To enable port 8083 you must set two 
+To enable `dnsdist` stats you must set two Environment Vairables (see below)
 
 
 # Environment Vairables
 
-| names            | meaning/use |
-|------------------|-------------|
-| ALCHEMY_API_CODE | API code from (Alchemy)[https://www.alchemy.com/] |
+| names              | meaning/use |
+|--------------------|-------------|
+| `ALCHEMY_API_CODE` | API code from [Alchemy](https://www.alchemy.com/) |
+| `DNSDIST_STATS_KEY` | Password to access `dnsdist` Promatheus Metric |
+| `DNSDIST_STATS_ACL` | ACL for who can access `dnsdist` Promatheus Metric |
+| `UWR_IP_ADDRESSES`  | IP Address of a [Universal Web Redirector](https://github.com/james-stevens/universal-web-redirect), require for ETH support
+| `HSD_MASTERS`       | Semi-colon separated list of you HSD nodes |
 
 
 # Additional Zone
 
-This container cna also serve additonal authritative zones. Copy the zones files into a directory, so the file name is the
+This container can also serve additonal authritative zones. Copy the zones files into a directory, so the file name is the
 same as the zone name, then map that directory into the container as `/opt/data/auth_zones`.
 
 Uodates to any of these zones files will be scanned for every 5 mins and the new data checked & loaded.
