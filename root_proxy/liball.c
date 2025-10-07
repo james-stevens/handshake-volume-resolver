@@ -4,6 +4,7 @@
     #################################################################
 */
 #include <stdio.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -11,6 +12,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "liball.h"
 #include "log_message.h"
@@ -123,4 +126,26 @@ char * cp;
 
     for(cp=hex;*cp;cp++) x = (x << 4) + hexchar(*cp);
     return x;
+}
+
+
+
+int change_to_user(char * run_as)
+{
+char buf[1000];
+struct passwd psent,*pp;
+
+    if ((getpwnam_r(run_as,&psent,buf,sizeof(buf),&pp))) {
+        logmsg(MSG_ERROR,"ERROR: Can't id user '%s' (%s)\n",run_as,ERRMSG);
+        return -9; }
+
+    if (setgid(psent.pw_gid)) {
+        logmsg(MSG_ERROR,"Failed to change to GID %d (%s)\n",psent.pw_gid,ERRMSG);
+        return -1; }
+
+    if (setuid(psent.pw_uid)) {
+        logmsg(MSG_ERROR,"Failed to change to UID %d (%s)\n",psent.pw_uid,ERRMSG);
+        return -2; }
+
+    return 0;
 }
