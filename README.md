@@ -17,11 +17,9 @@ To enable port 8083 you must set two
 
 # Environment Vairables
 
-|------------------|-------------|
 | names            | meaning/use |
 |------------------|-------------|
 | ALCHEMY_API_CODE | API code from (Alchemy)[https://www.alchemy.com/] |
-|------------------|-------------|
 
 
 # Additional Zone
