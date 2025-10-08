@@ -4,6 +4,8 @@ my_name="$(hostname)"
 my_ip="$(gethostip -d $(hostname))"
 
 {
+echo 'setACL("0.0.0.0/0")'
+echo ''
 echo "addLocal(\"${my_ip}:53\")"
 echo 'addLocal("127.0.0.1:53")'
 echo ''
