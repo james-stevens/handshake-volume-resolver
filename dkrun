@@ -2,6 +2,8 @@
 
 # test ETH -> curl 127.0.0.8:8081/content/bitsofcode.eth
 
+#	--env "HSD_MASTERS=192.168.8.31;192.168.8.41" \
+
 docker run -it \
 	-m 1g \
 	--read-only \
@@ -10,7 +12,7 @@ docker run -it \
 	--env DNSDIST_STATS_ACL="0.0.0.0/0" \
 	--env "ALCHEMY_API_CODE=${ALCHEMY_API_CODE}" \
 	--env "UWR_IP_ADDRESSES=78.129.239.31" \
-	--env "HSD_MASTERS=192.168.8.31;192.168.8.41" \
+	--env "HSD_MASTERS=192.168.1.145" \
 	-p 127.0.0.8:53:53 -p 127.0.0.8:53:53/udp \
 	-p 127.0.0.8:80:80 -p 127.0.0.8:9119:9119 \
 	-p 127.0.0.8:8081:8081 \

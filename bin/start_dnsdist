@@ -1,7 +1,6 @@
 #! /bin/sh
 
-my_name="$(hostname)"
-my_ip="$(gethostip -d $(hostname))"
+my_ip="$(hostname -i)"
 
 {
 echo 'setACL("0.0.0.0/0")'

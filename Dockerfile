@@ -12,8 +12,7 @@ RUN npm install -g express @imperviousinc/id ethers content-hash
 RUN apk add bind python3 py3-dnspython py3-requests
 RUN rm -f /etc/periodic/monthly/dns-root-hints
 
-RUN apk add dnsdist
-RUN apk add tcpdump
+RUN apk add dnsdist haproxy tcpdump
 
 RUN rm -rf /run /tmp
 RUN ln -s /dev/shm /run

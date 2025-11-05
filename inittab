@@ -7,3 +7,4 @@
 ::respawn:/usr/local/bin/start_eth_redirect
 ::respawn:/usr/local/bin/start_exporter
 ::respawn:/usr/local/bin/start_dnsdist
+::respawn:/usr/sbin/haproxy -f /usr/local/etc/haproxy.cfg
