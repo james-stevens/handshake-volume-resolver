@@ -9,7 +9,7 @@ RUN apk upgrade
 RUN apk add nodejs npm
 RUN npm install -g express @imperviousinc/id ethers content-hash
 
-RUN apk add bind python3 py3-dnspython py3-requests
+RUN apk add bind python3 py3-dnspython py3-requests prometheus-bind-exporter
 RUN rm -f /etc/periodic/monthly/dns-root-hints
 
 RUN apk add dnsdist haproxy tcpdump
@@ -26,4 +26,5 @@ COPY bin /usr/local/bin/
 RUN python3 -m compileall /usr/local/bin/
 
 RUN rm -f /var/cache/apk/*
+RUN /usr/local/bin/make_build
 CMD [ "/sbin/init" ]
