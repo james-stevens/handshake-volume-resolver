@@ -2,10 +2,14 @@
 
 # test ETH -> curl 127.0.0.8:8081/content/bitsofcode.eth
 
+# curl -H 'accept: application/dns-message' 'http://127.0.0.8/?dns=q80BAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB'  | hexdump -c
+
+
 docker run -it \
 	-m 1g \
 	--read-only \
-	-v ${PWD}/auth_test:/opt/data/auth_zones \
+	-v ${PWD}/data:/opt/data/ \
+	--env SYSLOG_STDOUT=Y \
 	--env DNSDIST_STATS_KEY=stats \
 	--env DNSDIST_STATS_ACL="0.0.0.0/0" \
 	--env "ALCHEMY_API_CODE=${ALCHEMY_API_CODE}" \
@@ -13,6 +17,6 @@ docker run -it \
 	--env "HSD_MASTERS=192.168.8.31;192.168.8.41" \
 	-p 127.0.0.8:53:53 -p 127.0.0.8:53:53/udp \
 	-p 127.0.0.8:80:80 -p 127.0.0.8:9119:9119 \
-	-p 127.0.0.8:8081:8081 \
+	-p 127.0.0.8:8081:8081 -p 127.0.0.8:8405:8405 \
 	-p 127.0.0.8:8083:8083 \
-	handshake-bind-hns
+	handshake-bind-hns $*

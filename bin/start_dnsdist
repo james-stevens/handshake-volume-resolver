@@ -1,12 +1,15 @@
 #! /bin/sh
 
-my_name="$(hostname)"
-my_ip="$(awk '{ for(i=2;i<=NF;i++) if ($i=="'"${my_name}"'") print $1 }' /etc/hosts)"
+my_ip="$(hostname -i)"
 
 {
+echo 'setACL("0.0.0.0/0")'
+echo ''
 echo "addLocal(\"${my_ip}:53\")"
 echo 'addLocal("127.0.0.1:53")'
 echo ''
+echo 'addDOHLocal("0.0.0.0:800",{},{},"/")'
+echo ""
 if test "${DNSDIST_STATS_KEY}" -a "${DNSDIST_STATS_ACL}"
 	then
 		echo 'webserver("0.0.0.0:8083")'
@@ -22,6 +25,7 @@ echo 'newServer({address="127.2.0.1", pool="auth-pool"})'
 echo 'newServer({address="127.2.0.2", pool="auth-pool"})'
 } > /run/dnsdist.conf
 
-/usr/bin/dnsdist --config /run/dnsdist.conf --check-config | logger -t start_dnsdist
+/usr/bin/dnsdist --config /run/dnsdist.conf \
+	--check-config | logger -t start_dnsdist
 
-exec /usr/bin/dnsdist --config /run/dnsdist.conf --supervised
+exec /usr/bin/dnsdist --config /run/dnsdist.conf --supervised >/dev/null 2>&1

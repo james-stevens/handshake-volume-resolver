@@ -1,3 +1,4 @@
 #! /bin/bash
 
-docker image build -t handshake-bind-hns . $*
+date +%Y%m%d.%H%M > build.txt
+docker image build -t $(cat list) . $*
