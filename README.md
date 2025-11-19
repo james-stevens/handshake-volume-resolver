@@ -65,4 +65,4 @@ For this service to work correctly, you must set the environmant variables
 
 The lastest build of this container is available from docker.com
 
-https://hub.docker.com/r/jamesstevens/handshake-bind-hns
+https://hub.docker.com/r/jamesstevens/handshake-volume-resolver

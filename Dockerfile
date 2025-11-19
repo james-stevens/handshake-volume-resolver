@@ -26,5 +26,6 @@ COPY bin /usr/local/bin/
 RUN python3 -m compileall /usr/local/bin/
 
 RUN rm -f /var/cache/apk/*
-RUN /usr/local/bin/make_build
+
+COPY build.txt /usr/local/etc/build.txt
 CMD [ "/sbin/init" ]
