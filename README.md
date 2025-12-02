@@ -1,16 +1,20 @@
 # A Universal DNS Resolver of ICANN & Web3 Names
 
-This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver and authritative ROOT server, with resolver/authritative queries separated based on the `RD` bit flag.
+This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver
+and authoritative ROOT server, with resolver/authoritative queries separated based on the `RD` bit flag.
+
+This container resolves all queries itself, relying on one or more Handshake Full Nodes to provide authoritative answers to Handshake ROOT queries
+and acts as an ICANN ROOT Secondary, so internall it keep a live copy of the ICANN ROOT zone, so can answer authoritative ICANN ROOT.
 
 You are required to run one or more [Handshake Nodes](https://github.com/james-stevens/handshake-full-node)
 to provide the Handshake resolution.
 
-If you require DoH, you will need to run this externally, `dnsdist` is a good choice for this.
+This container also provides a binary DoH service on port `80` that can be used in a prowser if fronted with a TLS proxy, like `nginx`.
 
 This container runs a "prefer ICANN" model. This means, if the same TLD exists in ICANN and Handshake, the ICANN TLD will be used.
 
 
-Prometheus stats can be found on ports 9119 (`bind` resolver) & 8083 (`dnsdist` filter).
+Prometheus stats can be found on ports 9119 (`bind` resolver), 8083 (`dnsdist` load-balance/failover) and 8405 (`haproxy` for DoH).
 
 To enable `dnsdist` stats you must set two Environment Vairables (see below)
 
@@ -28,7 +32,7 @@ To enable `dnsdist` stats you must set two Environment Vairables (see below)
 
 # Additional Zone
 
-This container can also serve additonal authritative zones. Copy the zones files into a directory, so the file name is the
+This container can also serve additonal authoritative zones. Copy the zones files into a directory, so the file name is the
 same as the zone name, then map that directory into the container as `/opt/data/auth_zones`.
 
 Uodates to any of these zones files will be scanned for every 5 mins and the new data checked & loaded.
