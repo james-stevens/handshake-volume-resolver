@@ -1,15 +1,15 @@
 # A Universal DNS Resolver of ICANN & Web3 Names
 
-This contsiner providers a high volume ICANN, Handshake & ETH aware DNS Resolver
+This container providers a high volume native ICANN, Handshake & ETH aware DNS Resolver
 and authoritative ROOT server, with resolver/authoritative queries separated based on the `RD` bit flag.
 
 This container resolves all queries itself, relying on one or more Handshake Full Nodes to provide authoritative answers to Handshake ROOT queries
-and acts as an ICANN ROOT Secondary, so internall it keep a live copy of the ICANN ROOT zone, so can answer authoritative ICANN ROOT.
+and acts as an ICANN ROOT Secondary, so internally it keep a live copy of the ICANN ROOT zone, to get authoritative ICANN ROOT answers.
 
 You are required to run one or more [Handshake Nodes](https://github.com/james-stevens/handshake-full-node)
-to provide the Handshake resolution.
+to provide the Handshake ROOT zone name resolution. You you are not running my `hsd` container, will need to map the `hsd` authoritative port (`5349`) to appear as port `53`.
 
-This container also provides a binary DoH service on port `80` that can be used in a prowser if fronted with a TLS proxy, like `nginx`.
+This container also provides a binary DoH service on port `80` that can be used in a browser, when fronted with a TLS proxy, like `nginx`.
 
 This container runs a "prefer ICANN" model. This means, if the same TLD exists in ICANN and Handshake, the ICANN TLD will be used.
 

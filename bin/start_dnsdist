@@ -23,6 +23,12 @@ echo 'newServer({address="127.0.0.1:5300", pool="recursive-pool"})'
 echo ''
 echo 'newServer({address="127.2.0.1", pool="auth-pool"})'
 echo 'newServer({address="127.2.0.2", pool="auth-pool"})'
+
+for ip in ${RESOLVER_PEERS}
+	do
+		echo "newServer({address=\"${ip}\", pool=\"recursive-pool\"})"
+		echo "newServer({address=\"${ip}\", pool=\"auth-pool\"})"
+	done
 } > /run/dnsdist.conf
 
 /usr/bin/dnsdist --config /run/dnsdist.conf \

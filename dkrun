@@ -9,11 +9,13 @@ docker run -it \
 	-m 1g \
 	--read-only \
 	-v ${PWD}/data:/opt/data/ \
+	--ulimit nofile=15000:15000 \
 	--env SYSLOG_STDOUT=Y \
 	--env DNSDIST_STATS_KEY=stats \
 	--env DNSDIST_STATS_ACL="0.0.0.0/0" \
 	--env "ETH_MASTERS=192.168.3.26;192.168.3.36" \
 	--env "HSD_MASTERS=192.168.3.21;192.168.3.31" \
+	--env "RESOLVER_PEERS=192.168.3.22 192.168.3.32" \
 	-p 127.0.0.8:53:53 -p 127.0.0.8:53:53/udp \
 	-p 127.0.0.8:80:80 -p 127.0.0.8:9119:9119 \
 	-p 127.0.0.8:8081:8081 -p 127.0.0.8:8405:8405 \
