@@ -12,11 +12,10 @@ docker run -it \
 	--env SYSLOG_STDOUT=Y \
 	--env DNSDIST_STATS_KEY=stats \
 	--env DNSDIST_STATS_ACL="0.0.0.0/0" \
-	--env "ALCHEMY_API_CODE=${ALCHEMY_API_CODE}" \
-	--env "UWR_IP_ADDRESSES=78.129.239.31" \
-	--env "HSD_MASTERS=192.168.8.31;192.168.8.41" \
+	--env "ETH_MASTERS=192.168.3.26;192.168.3.36" \
+	--env "HSD_MASTERS=192.168.3.21;192.168.3.31" \
 	-p 127.0.0.8:53:53 -p 127.0.0.8:53:53/udp \
 	-p 127.0.0.8:80:80 -p 127.0.0.8:9119:9119 \
 	-p 127.0.0.8:8081:8081 -p 127.0.0.8:8405:8405 \
 	-p 127.0.0.8:8083:8083 \
-	handshake-bind-hns $*
+	$(cat list) $*
