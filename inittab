@@ -1,10 +1,8 @@
 ::respawn:/usr/local/bin/start_syslogd
-::respawn:crond -f
+::respawn:/usr/sbin/crond -f -l 9 -S
 ::respawn:/usr/local/bin/start_named
 ::respawn:/usr/local/bin/start_root_proxy 1
 ::respawn:/usr/local/bin/start_root_proxy 2
-::respawn:/usr/local/bin/rest.mjs
-::respawn:/usr/local/bin/start_eth_redirect
 ::respawn:/usr/local/bin/start_exporter
 ::respawn:/usr/local/bin/start_dnsdist
 ::respawn:/usr/sbin/haproxy -f /usr/local/etc/haproxy.cfg

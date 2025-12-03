@@ -24,12 +24,21 @@ if test -d /opt/data/auth_zones/.
 		done
 	fi
 
-if test "${ALCHEMY_API_CODE}"
+touch ${base}/etc/bind/with_eth.inc
+if test "${ETH_MASTERS}"
 	then
-		cp /usr/local/etc/with_eth.inc ${base}/etc/bind/with_eth.inc
-	else
-		touch ${base}/etc/bind/with_eth.inc
+		/usr/local/bin/envsub /usr/local/etc/with_eth.inc > ${base}/etc/bind/with_eth.inc
 	fi
+
+if test -z "${REQUIRE_COOKIES}"; then export REQUIRE_COOKIES="yes"; fi
+/usr/local/bin/envsub /usr/local/etc/rate-limit.inc > ${base}/etc/bind/rate-limit.inc
+
+if test -z "${ALLOWED_SUBNETS}"
+	then
+		echo "acl allowed-nets { 192.168.0.0/16; 10.0.0.0/8; 172.16.0.0/12; 127.0.0.0/8; };"
+	else
+		echo "acl allowed-nets { ${ALLOWED_SUBNETS}; 127.0.0.0/8; };"
+	fi > /run/named/etc/allowed.inc
 
 cp /usr/local/etc/named.conf ${base}/etc/bind/named.conf
 chown -R named: ${base}
