@@ -14,8 +14,11 @@ chmod 644 ${base}/etc/bind/auth_zones.inc
 if test -d /opt/data/auth_zones/.
 	then
 		cd /opt/data/auth_zones
-		for file in *
+		# `*` stays literal when the directory is empty, which makes BIND
+		# load a zone named "*". List only real files in this directory.
+		for file in $(find /opt/data/auth_zones -maxdepth 1 -type f ! -name '.*')
 		do
+			file=${file##*/}
 			logger -t start_bind "Adding auth zone '${file}'"
 			named-checkzone -i local-sibling ${file} ${file} | logger -t start_bind
 			cp ${file} ${base}/zones/${file}
