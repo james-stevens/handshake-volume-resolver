@@ -1,7 +1,7 @@
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements are possible, contact me for more information
 
-FROM alpine:3.22
+FROM alpine:3.24
 
 RUN apk update
 RUN apk upgrade
