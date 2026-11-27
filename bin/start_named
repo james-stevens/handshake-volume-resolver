@@ -38,9 +38,9 @@ if test -z "${REQUIRE_COOKIES}"; then export REQUIRE_COOKIES="yes"; fi
 
 if test -z "${ALLOWED_SUBNETS}"
 	then
-		echo "acl allowed-nets { 192.168.0.0/16; 10.0.0.0/8; 172.16.0.0/12; 127.0.0.0/8; };"
+		echo "acl allowed-nets { 192.168.0.0/16; 10.0.0.0/8; 172.16.0.0/12; 127.0.0.0/8; ::1; fc00::/7; };"
 	else
-		echo "acl allowed-nets { ${ALLOWED_SUBNETS}; 127.0.0.0/8; };"
+		echo "acl allowed-nets { ${ALLOWED_SUBNETS}; 127.0.0.0/8; ::1; };"
 	fi > /run/named/etc/allowed.inc
 
 cp /usr/local/etc/named.conf ${base}/etc/bind/named.conf
