@@ -27,6 +27,15 @@ To enable `dnsdist` stats you must set two Environment Vairables (see below)
 | `DNSDIST_STATS_ACL` | ACL for who can access `dnsdist` Promatheus Metric |
 | `HSD_MASTERS`       | Semi-colon separated list of your HSD nodes (required) |
 | `ETH_MASTERS`       | Semi-colon separated list of your ETH gateways (optional) |
+| `ALLOWED_SUBNETS`   | Client networks allowed to query, as a BIND ACL list. Default is RFC 1918, `127.0.0.0/8`, `::1` and `fc00::/7`. Loopback is always included |
+| `REQUIRE_COOKIES`   | `yes` (default) or `no`. `yes` pushes cookie-less stub clients to TCP |
+
+
+# Rate limiting
+
+The values in `rate-limit.inc` are starting points to tune. For Do53 or open-resolver use, bind-mount your own `rate-limit.inc` over `/usr/local/etc/rate-limit.inc` to change the limits and protection. The start script substitutes `{{REQUIRE_COOKIES}}` and named loads the result as `/etc/bind/rate-limit.inc`.
+
+`ALLOWED_SUBNETS` and `REQUIRE_COOKIES` are described above. The rate-limit exempt ACL is loopback only (`127.0.0.0/8` and `::1`).
 
 
 # Additional Zone
