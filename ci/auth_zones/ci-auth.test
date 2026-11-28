@@ -1,0 +1,5 @@
+$TTL 300
+@ IN SOA ns.ci-auth.test. hostmaster.invalid. 1 10800 3600 604800 300
+@ IN NS ns.ci-auth.test.
+@ IN A 192.0.2.1
+ns IN A 192.0.2.1
