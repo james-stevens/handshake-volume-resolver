@@ -544,6 +544,7 @@ fi
 # cannot validate Handshake names, so validation is left to the
 # client or a downstream validating resolver. +dnssec still asks
 # for RRSIGs (the DO bit). The ad flag must not be set.
+# google.com is not DNSSEC-signed, so this query checks AD only.
 if dig_capture out dig_rec google.com A
 then
 	st=$(dig_header_status "${out}")
@@ -552,24 +553,37 @@ then
 	then
 		fail "rd=1 google.com A +dnssec +adflag expected NOERROR, got status=${st} flags=${flags}"
 		printf '%s\n' "${out}" | sed 's/^/  /'
+	elif flags_has "${flags}" ad
+	then
+		fail "rd=1 google.com A +dnssec +adflag must not set the ad flag (validation is left to the client); flags=${flags}"
+		printf '%s\n' "${out}" | sed 's/^/  /'
 	else
-		if flags_has "${flags}" ad
-		then
-			fail "rd=1 google.com A +dnssec +adflag must not set the ad flag (validation is left to the client); flags=${flags}"
-			printf '%s\n' "${out}" | sed 's/^/  /'
-		else
-			pass "rd=1 google.com A +dnssec +adflag does not set the ad flag (flags: ${flags})"
-		fi
-		if section_has_type "${out}" ANSWER RRSIG
-		then
-			pass "rd=1 google.com A +dnssec returns RRSIGs in the answer"
-		else
-			fail "rd=1 google.com A +dnssec expected RRSIGs in the answer (DO bit should still be honoured)"
-			printf '%s\n' "${out}" | sed 's/^/  /'
-		fi
+		pass "rd=1 google.com A +dnssec +adflag does not set the ad flag (flags: ${flags})"
 	fi
 else
 	fail "rd=1 google.com A +dnssec +adflag query failed to complete"
+	printf '%s\n' "${out}" | sed 's/^/  /'
+fi
+
+# google.com has no DNSSEC signatures. isc.org is signed, so a
+# recursive query with the DO bit must still return RRSIGs even
+# though validation is off.
+if dig_capture out dig_rec isc.org A
+then
+	st=$(dig_header_status "${out}")
+	if test "${st}" != "NOERROR"
+	then
+		fail "rd=1 isc.org A +dnssec expected NOERROR, got status=${st}"
+		printf '%s\n' "${out}" | sed 's/^/  /'
+	elif section_has_type "${out}" ANSWER RRSIG
+	then
+		pass "rd=1 isc.org A +dnssec returns RRSIGs in the answer"
+	else
+		fail "rd=1 isc.org A +dnssec expected RRSIGs in the answer (DO bit should still be honoured)"
+		printf '%s\n' "${out}" | sed 's/^/  /'
+	fi
+else
+	fail "rd=1 isc.org A +dnssec query failed to complete"
 	printf '%s\n' "${out}" | sed 's/^/  /'
 fi
 
