@@ -587,6 +587,25 @@ else
 	printf '%s\n' "${out}" | sed 's/^/  /'
 fi
 
+# dnssec-failed.org is a deliberately broken DNSSEC zone. A validating
+# resolver returns SERVFAIL. Validation is off, so this must still
+# resolve. That is the proof validation is left to the client.
+if dig_capture out dig_rec dnssec-failed.org A
+then
+	st=$(dig_header_status "${out}")
+	ans=$(dig_count_field ANSWER "${out}")
+	if test "${st}" = "NOERROR" && test "${ans:-0}" -ge 1
+	then
+		pass "rd=1 dnssec-failed.org A is NOERROR with an answer (validation is off, ANSWER=${ans})"
+	else
+		fail "rd=1 dnssec-failed.org A expected NOERROR with an answer (validation is off), got status=${st} ANSWER=${ans:-0}"
+		printf '%s\n' "${out}" | sed 's/^/  /'
+	fi
+else
+	fail "rd=1 dnssec-failed.org A query failed to complete"
+	printf '%s\n' "${out}" | sed 's/^/  /'
+fi
+
 # rd=0 behaviour as designed for this resolver (authoritative root,
 # not a recursive answer):
 #   . SOA     — NOERROR, SOA in the answer, aa
