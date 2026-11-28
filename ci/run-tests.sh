@@ -565,25 +565,25 @@ else
 	printf '%s\n' "${out}" | sed 's/^/  /'
 fi
 
-# google.com has no DNSSEC signatures. isc.org is signed, so a
-# recursive query with the DO bit must still return RRSIGs even
-# though validation is off.
-if dig_capture out dig_rec isc.org A
+# google.com has no DNSSEC signatures. com is signed, and its SOA
+# is stable registry data, so a recursive query with the DO bit must
+# still return an RRSIG even though validation is off.
+if dig_capture out dig_rec com SOA
 then
 	st=$(dig_header_status "${out}")
 	if test "${st}" != "NOERROR"
 	then
-		fail "rd=1 isc.org A +dnssec expected NOERROR, got status=${st}"
+		fail "rd=1 com SOA +dnssec expected NOERROR, got status=${st}"
 		printf '%s\n' "${out}" | sed 's/^/  /'
 	elif section_has_type "${out}" ANSWER RRSIG
 	then
-		pass "rd=1 isc.org A +dnssec returns RRSIGs in the answer"
+		pass "rd=1 com SOA +dnssec returns an RRSIG in the answer"
 	else
-		fail "rd=1 isc.org A +dnssec expected RRSIGs in the answer (DO bit should still be honoured)"
+		fail "rd=1 com SOA +dnssec expected an RRSIG in the answer (DO bit should still be honoured)"
 		printf '%s\n' "${out}" | sed 's/^/  /'
 	fi
 else
-	fail "rd=1 isc.org A +dnssec query failed to complete"
+	fail "rd=1 com SOA +dnssec query failed to complete"
 	printf '%s\n' "${out}" | sed 's/^/  /'
 fi
 
