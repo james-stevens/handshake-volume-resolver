@@ -1,0 +1,123 @@
+name: CI
+
+# Full CI for handshake-volume-resolver.
+# build.txt is created in the runner workspace before docker build and
+# is already in .gitignore; it is never committed.
+#
+# Handshake path without an hsd node: HSD_MASTERS is pointed at real
+# ICANN root servers (f-root and c-root). ICANN names then work
+# end-to-end. Handshake TLDs are not available, and a made-up TLD must
+# still return NXDOMAIN (not SERVFAIL) via the internal-root then
+# external-root fallback in root_proxy. A stub authoritative is the
+# fallback only if that approach does not work.
+#
+# .eth resolution is not exercised here; it needs ethereum-dns-gateway.
+# Tests never use real is-this-you zone data. The only local zone is
+# the synthetic ci-auth.test fixture.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Shellcheck CI scripts
+        run: shellcheck ci/run-tests.sh
+
+      - name: Shellcheck bin scripts
+        run: |
+          set -eu
+          # envsub is awk; bin/node_modules is a symlink. root_proxy is
+          # compiled in the image builder stage, not a shell script.
+          # Lint the shell start scripts only.
+          mapfile -t scripts < <(find bin -maxdepth 1 -type f \( -name 'start_*' -o -name 'cron_*' \))
+          printf 'Checking: %s\n' "${scripts[*]}"
+          # Keep a full report in the log (warnings in the existing
+          # scripts are also listed in the CI notes).
+          shellcheck --severity=style "${scripts[@]}" || true
+          # Fail the job only on errors, so style warnings already
+          # present on master do not block the first CI merge.
+          shellcheck --severity=error "${scripts[@]}"
+
+      - name: Ruff and yapf (if Python is present)
+        run: |
+          set -eu
+          mapfile -t pys < <(git ls-files '*.py')
+          if [ "${#pys[@]}" -eq 0 ]; then
+            echo "No Python files in the tree; skipping ruff and yapf."
+            echo "bin/pyproject.toml is present (ruff, column_limit 119) but there are no .py sources."
+            exit 0
+          fi
+          python3 -m pip install --user ruff yapf
+          ruff check --config bin/pyproject.toml "${pys[@]}"
+          python3 -m yapf --diff --style='{column_limit: 119}' "${pys[@]}"
+
+  test:
+    name: Build image and live tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dig
+        run: sudo apt-get update && sudo apt-get install -y bind9-dnsutils curl
+
+      - name: Create build.txt
+        run: date +%Y%m%d.%H%M > build.txt && cat build.txt
+
+      - name: Build image
+        # Multi-stage Dockerfile compiles root_proxy in the builder
+        # stage, so a separate compile job is not needed.
+        run: docker image build -t handshake-volume-resolver:ci .
+
+      - name: Start container
+        run: |
+          set -eu
+          DATA="${RUNNER_TEMP}/hvr-data"
+          mkdir -p "${DATA}/auth_zones" "${DATA}/logs"
+          # Synthetic fixture only. Do not mount data/auth_zones/test.com
+          # (it would shadow the public test.com zone).
+          cp ci/auth_zones/ci-auth.test "${DATA}/auth_zones/"
+          # HSD_MASTERS points at f-root and c-root, not an hsd node.
+          # Quoted because the value contains a semicolon.
+          docker run -d \
+            --name hvr-ci \
+            --read-only \
+            --memory 1g \
+            --shm-size 128m \
+            --ulimit nofile=15000:15000 \
+            --env SYSLOG_STDOUT=Y \
+            --env DNSDIST_STATS_KEY=stats \
+            --env DNSDIST_STATS_ACL=0.0.0.0/0 \
+            --env "HSD_MASTERS=192.5.5.241;192.33.4.12" \
+            -v "${DATA}:/opt/data" \
+            handshake-volume-resolver:ci
+          docker ps --filter name=hvr-ci
+
+      - name: Run live tests
+        run: CONTAINER_NAME=hvr-ci ci/run-tests.sh
+
+      - name: Container logs
+        if: always()
+        run: docker logs hvr-ci || true
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f hvr-ci || true
