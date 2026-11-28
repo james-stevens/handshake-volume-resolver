@@ -7,7 +7,7 @@ if ! test -d /opt/data/auth_zones/.; then exit 0; fi
 base="/run/named"
 
 cd /opt/data/auth_zones
-for file in *
+for file in $(find /opt/data/auth_zones -maxdepth 1 -type f ! -name '.*')
 do
 	if test ${file} -nt ${base}/zones/${file}
 		then

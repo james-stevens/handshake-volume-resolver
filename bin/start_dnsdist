@@ -31,7 +31,8 @@ for ip in ${RESOLVER_PEERS}
 	done
 } > /run/dnsdist.conf
 
-/usr/bin/dnsdist --config /run/dnsdist.conf \
-	--check-config | logger -t start_dnsdist
+/usr/bin/dnsdist --config /run/dnsdist.conf --check-config | \
+	logger -t start_dnsdist
 
-exec /usr/bin/dnsdist --config /run/dnsdist.conf --supervised >/dev/null 2>&1
+exec /usr/bin/dnsdist -u dnsdist -g dnsdist \
+	--config /run/dnsdist.conf --supervised >/dev/null 2>&1

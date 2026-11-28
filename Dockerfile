@@ -10,7 +10,7 @@ RUN rm -f /etc/periodic/monthly/dns-root-hints
 
 RUN apk add dnsdist
 RUN apk add haproxy
-RUN apk add bind prometheus-bind-exporter
+RUN apk add bind prometheus-bind-exporter su-exec
 RUN apk add tcpdump
 
 RUN rm -rf /run /tmp
