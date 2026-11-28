@@ -587,23 +587,96 @@ else
 	printf '%s\n' "${out}" | sed 's/^/  /'
 fi
 
-# dnssec-failed.org is a deliberately broken DNSSEC zone. A validating
-# resolver returns SERVFAIL. Validation is off, so this must still
-# resolve. That is the proof validation is left to the client.
-if dig_capture out dig_rec dnssec-failed.org A
-then
-	st=$(dig_header_status "${out}")
-	ans=$(dig_count_field ANSWER "${out}")
-	if test "${st}" = "NOERROR" && test "${ans:-0}" -ge 1
+# dnssec-failed.org (Comcast) and rhybar.cz (CZ.NIC) are deliberately
+# broken DNSSEC zones on the ISOC DNSSEC test list. A validating
+# resolver returns SERVFAIL. Validation is off here, so a live zone
+# must still return NOERROR with an answer. The check passes when at
+# least one does. A zone that has vanished (reference NXDOMAIN, or no
+# answer from a validating resolver) is skipped, so one disappearance
+# does not fail CI.
+#
+# shellcheck disable=SC2317,SC2329
+ref_dig() {
+	dig @"$1" "$2" A +time=3 +tries=1 +rec +notcp +nocmd +nostats
+}
+
+# Print live, vanished, or noref.
+zone_reference() {
+	_name=$1
+	_saw_nx=0
+	_saw_live=0
+	_srv=""
+	for _srv in 1.1.1.1 8.8.8.8 9.9.9.9
+	do
+		_ref=
+		dig_capture _ref ref_dig "${_srv}" "${_name}" || true
+		_rst=$(dig_header_status "${_ref}")
+		case "${_rst}" in
+		NXDOMAIN)
+			_saw_nx=1
+			;;
+		"")
+			;;
+		*)
+			_saw_live=1
+			;;
+		esac
+	done
+	if test "${_saw_live}" = 1
 	then
-		pass "rd=1 dnssec-failed.org A is NOERROR with an answer (validation is off, ANSWER=${ans})"
+		printf '%s\n' live
+	elif test "${_saw_nx}" = 1
+	then
+		printf '%s\n' vanished
 	else
-		fail "rd=1 dnssec-failed.org A expected NOERROR with an answer (validation is off), got status=${st} ANSWER=${ans:-0}"
-		printf '%s\n' "${out}" | sed 's/^/  /'
+		printf '%s\n' noref
 	fi
+}
+
+broken_ok=0
+for zone in dnssec-failed.org rhybar.cz
+do
+	ref=$(zone_reference "${zone}")
+	case "${ref}" in
+	vanished)
+		skip "rd=1 ${zone} A (zone vanished: a validating reference returned NXDOMAIN)"
+		continue
+		;;
+	noref)
+		skip "rd=1 ${zone} A (no answer from an ICANN validating reference)"
+		continue
+		;;
+	esac
+	if dig_capture out dig_rec "${zone}" A
+	then
+		st=$(dig_header_status "${out}")
+		ans=$(dig_count_field ANSWER "${out}")
+		if test "${st}" = "NOERROR" && test "${ans:-0}" -ge 1
+		then
+			pass "rd=1 ${zone} A is NOERROR with an answer (validation is off, ANSWER=${ans})"
+			broken_ok=$((broken_ok + 1))
+		else
+			warn "rd=1 ${zone} A is published but did not resolve here (status=${st} ANSWER=${ans:-0})"
+			printf '%s\n' "${out}" | sed 's/^/  /'
+		fi
+	else
+		st=$(dig_header_status "${out}")
+		ans=$(dig_count_field ANSWER "${out}")
+		if test "${st}" = "NOERROR" && test "${ans:-0}" -ge 1
+		then
+			pass "rd=1 ${zone} A is NOERROR with an answer (validation is off, ANSWER=${ans})"
+			broken_ok=$((broken_ok + 1))
+		else
+			warn "rd=1 ${zone} A is published but did not complete (status=${st:-none})"
+			printf '%s\n' "${out}" | sed 's/^/  /'
+		fi
+	fi
+done
+if test "${broken_ok}" -ge 1
+then
+	pass "at least one deliberately broken DNSSEC zone resolved (validation is off)"
 else
-	fail "rd=1 dnssec-failed.org A query failed to complete"
-	printf '%s\n' "${out}" | sed 's/^/  /'
+	fail "no deliberately broken DNSSEC zone returned NOERROR with an answer"
 fi
 
 # rd=0 behaviour as designed for this resolver (authoritative root,
