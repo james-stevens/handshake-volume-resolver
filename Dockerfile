@@ -1,11 +1,18 @@
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements are possible, contact me for more information
 
+FROM alpine:3.24 AS builder
+RUN apk add gcc make musl-dev findutils
+COPY root_proxy /src
+WORKDIR /src
+RUN make clean && make ALL && strip -p root_proxy
+
 FROM alpine:3.24
 
 RUN apk update
 RUN apk upgrade
 
+COPY --from=builder /src/root_proxy /usr/local/bin/root_proxy
 RUN rm -f /etc/periodic/monthly/dns-root-hints
 
 RUN apk add dnsdist
