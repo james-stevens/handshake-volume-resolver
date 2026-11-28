@@ -78,14 +78,15 @@ dig_query() {
 		"$@"
 }
 
-# Invoked by name from dig_capture / check_fake_nxdomain, not as a
-# direct call, so shellcheck thinks the bodies are unreachable.
-# shellcheck disable=SC2317
+# Passed by name into check_fake_nxdomain (and dig_norec is also
+# called directly). shellcheck 0.9 reports SC2317; 0.11 reports
+# SC2329 for the indirect call.
+# shellcheck disable=SC2317,SC2329
 dig_rec() {
 	dig_query +rec +notcp +dnssec +adflag "$@"
 }
 
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 dig_norec() {
 	dig_query +norec +notcp +dnssec +adflag "$@"
 }
@@ -135,8 +136,9 @@ flags_has() {
 	_flags=$1
 	_tok=$2
 	printf '%s\n' "${_flags}" | awk -v t="${_tok}" '
-		BEGIN { n = split($0, a, /[[:space:]]+/); found = 1 }
-		END {
+		{
+			n = split($0, a, /[[:space:]]+/)
+			found = 1
 			for (i = 1; i <= n; i++) if (a[i] == t) found = 0
 			exit found
 		}
@@ -574,7 +576,9 @@ fi
 # rd=0 behaviour as designed for this resolver (authoritative root,
 # not a recursive answer):
 #   . SOA     — NOERROR, SOA in the answer, aa
-#   com. NS   — NOERROR, NS in the answer (in-zone delegation)
+#   com. NS   — referral: NOERROR, empty answer, NS in AUTHORITY.
+#               BIND treats the delegation as a zone cut, so the parent
+#               does not return those NS records in the answer section.
 #   google.com A — referral: NOERROR, no A in ANSWER, NS in AUTHORITY
 if dig_capture out dig_norec . SOA
 then
@@ -597,11 +601,14 @@ if dig_capture out dig_norec com. NS
 then
 	st=$(dig_header_status "${out}")
 	ans=$(dig_count_field ANSWER "${out}")
-	if test "${st}" = "NOERROR" && test "${ans:-0}" -ge 1 && section_has_type "${out}" ANSWER NS
+	if test "${st}" = "NOERROR" \
+		&& test "${ans:-0}" -eq 0 \
+		&& section_has_type "${out}" AUTHORITY NS \
+		&& ! section_has_type "${out}" ANSWER NS
 	then
-		pass "rd=0 com. NS is NOERROR with NS in the answer (in-zone delegation)"
+		pass "rd=0 com. NS is a referral (NOERROR, no NS in ANSWER, NS in AUTHORITY)"
 	else
-		fail "rd=0 com. NS expected NOERROR with NS in the answer, got status=${st} ANSWER=${ans:-0}"
+		fail "rd=0 com. NS expected a referral, got status=${st} ANSWER=${ans:-0}"
 		printf '%s\n' "${out}" | sed 's/^/  /'
 	fi
 else
