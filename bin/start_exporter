@@ -1,5 +1,5 @@
 #! /bin/sh
 
-exec /usr/bin/bind_exporter \
+exec su-exec named:named /usr/bin/bind_exporter \
 	--bind.pid-file="/run/named/var/run/named/named.pid" \
 	> /run/exporter.log 2>&1

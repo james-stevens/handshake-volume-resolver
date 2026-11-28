@@ -1,6 +1,0 @@
-#! /bin/sh
-##########################################################################
-#    (c) Copyright 2021-2025 JRCS Ltd - All Rights Reserved              #
-##########################################################################
-
-exec /usr/local/bin/eth_redirect.py -t 10 -u "${UWR_IP_ADDRESSES}" 2>&1 | logger -t eth_redirect
